@@ -1,51 +1,150 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
+    <!--
+      统一父 POM：所有中间件模块都继承 Spring Boot 3.4.0 + Java 17。
+      例外：springboot-nacos 停留在 Boot 2.6.3（nacos-config-spring-boot-starter 0.2.x 不兼容 Boot 3），
+      它以 legacy 形式独立存在，不参与本聚合构建，详见 README.md。
+    -->
     <parent>
-        <artifactId>spring-boot-starter-parent</artifactId>
         <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.4.0</version>
+        <relativePath/>
     </parent>
 
     <groupId>com.xiaoke</groupId>
-    <artifactId>test</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <artifactId>spring-boot-middleware-lab</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
+
+    <name>spring-boot-middleware-lab</name>
+    <description>Spring Boot 中间件学习实验合集</description>
+
     <modules>
-        <module>springboot-nacos</module>
+        <!-- 基础能力 Demo（AOP / 注解 / ThreadLocal） -->
+        <module>springboot-basics</module>
+        <!-- 存量模块 -->
+        <module>springboot-redis</module>
+        <module>springboot-minio</module>
+        <module>springboot-jwt</module>
+        <module>springboot-httpclient</module>
+        <!-- 缓存与协调 -->
+        <module>springboot-redisson</module>
+        <module>springboot-cache</module>
+        <!-- 数据访问 -->
+        <module>springboot-shardingsphere</module>
+        <module>springboot-clickhouse</module>
+        <!-- 消息 -->
+        <module>springboot-kafka</module>
+        <module>springboot-rabbitmq</module>
+        <!-- 可观测性 -->
+        <module>springboot-metrics</module>
     </modules>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- 中间件客户端版本集中管理 -->
+        <redisson.version>3.35.0</redisson.version>
+        <!-- 5.5.0 的 POM 把 shardingsphere-test-util 声明成了编译依赖且未发布，5.5.1 已修正为 test scope -->
+        <shardingsphere.version>5.5.1</shardingsphere.version>
+        <clickhouse-jdbc.version>0.6.5</clickhouse-jdbc.version>
+        <minio.version>8.4.0</minio.version>
+        <jjwt.version>0.11.5</jjwt.version>
+        <httpclient.version>4.5.14</httpclient.version>
+        <json.version>20240303</json.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- 分布式锁 / 限流 / 布隆过滤器 -->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson</artifactId>
+                <version>${redisson.version}</version>
+            </dependency>
+
+            <!-- 分库分表 / 读写分离 -->
+            <dependency>
+                <groupId>org.apache.shardingsphere</groupId>
+                <artifactId>shardingsphere-jdbc</artifactId>
+                <version>${shardingsphere.version}</version>
+            </dependency>
+
+            <!-- ClickHouse JDBC -->
+            <dependency>
+                <groupId>com.clickhouse</groupId>
+                <artifactId>clickhouse-jdbc</artifactId>
+                <version>${clickhouse-jdbc.version}</version>
+            </dependency>
+
+            <!-- 对象存储 -->
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>${minio.version}</version>
+            </dependency>
+
+            <!-- JWT -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+
+            <!-- HTTP 客户端 -->
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclient.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.json</groupId>
+                <artifactId>json</artifactId>
+                <version>${json.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- 所有模块共享的学习期便利依赖 -->
     <dependencies>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
-            <scope>compile</scope>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 
 </project>
